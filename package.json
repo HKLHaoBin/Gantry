@@ -37,7 +37,8 @@
     "url": "https://github.com/uhaop/Gantry/issues"
   },
   "overrides": {
-    "undici": "^6.23.0"
+    "undici": "^6.24.0",
+    "flatted": "^3.4.0"
   },
   "type": "commonjs",
   "engines": {
