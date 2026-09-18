@@ -8,13 +8,25 @@ $taskName = "Cursor Agent Worker"
 $configRoot = Join-Path $env:USERPROFILE ".cursor\agent-worker"
 $memoryPath = Join-Path $env:USERPROFILE ".cursor\memory-graphs\WORKSPACE-ROOTS.md"
 
-$task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-if ($task) {
-  Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-  Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
-  Write-Host "Removed scheduled task: $taskName"
+$task = $null
+if (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue) {
+  $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+  if ($task) {
+    Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+    Write-Host "Removed scheduled task: $taskName"
+  } else {
+    Write-Host "Scheduled task not found: $taskName"
+  }
+} elseif (Get-Command schtasks.exe -ErrorAction SilentlyContinue) {
+  & (Get-Command schtasks.exe).Source /Delete /TN $taskName /F | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "Removed scheduled task: $taskName"
+  } else {
+    Write-Host "Scheduled task not found: $taskName"
+  }
 } else {
-  Write-Host "Scheduled task not found: $taskName"
+  Write-Host "No ScheduledTasks module or schtasks.exe was available."
 }
 
 if (Test-Path -LiteralPath $configRoot) {

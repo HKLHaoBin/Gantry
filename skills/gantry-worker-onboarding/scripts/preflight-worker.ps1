@@ -63,11 +63,26 @@ if ($config) {
   }
 }
 
-$task = Get-ScheduledTask -TaskName "Cursor Agent Worker" -ErrorAction SilentlyContinue
+$task = $null
+$taskDetail = "not registered"
+if (Get-Command Get-ScheduledTask -ErrorAction SilentlyContinue) {
+  $task = Get-ScheduledTask -TaskName "Cursor Agent Worker" -ErrorAction SilentlyContinue
+  if ($task) {
+    $taskDetail = "state=$($task.State)"
+  }
+} elseif (Get-Command schtasks.exe -ErrorAction SilentlyContinue) {
+  $taskOutput = @(& (Get-Command schtasks.exe).Source /Query /TN "Cursor Agent Worker" /FO LIST /NH 2>$null)
+  if ($LASTEXITCODE -eq 0) {
+    $task = $taskOutput
+    $taskDetail = "registered through schtasks.exe"
+  }
+} else {
+  $taskDetail = "no ScheduledTasks module or schtasks.exe"
+}
 Check-Result `
   -Label "Logon startup task" `
   -Ok ($null -ne $task) `
-  -Detail $(if ($task) { "state=$($task.State)" } else { "not registered" })
+  -Detail $taskDetail
 
 if ($agent -and $config -and $directories.Count -gt 0 -and -not $SkipRemoteDebug) {
   $commonArguments = @("worker", "--name", [string]$config.machineName)

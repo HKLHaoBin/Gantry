@@ -45,7 +45,9 @@ function Write-ManagedWorkspaceBlock {
     "| Path |"
     "| --- |"
   )
-  $blockLines += $Directories | ForEach-Object { "| ``$_`` |" }
+  foreach ($directory in $Directories) {
+    $blockLines += "| ``$directory`` |"
+  }
   $blockLines += $end
   $block = $blockLines -join [Environment]::NewLine
 
@@ -97,6 +99,20 @@ function Register-WorkerStartupTask {
   $userId = Get-CurrentUserId
   $powershellPath = Get-WindowsPowerShellPath
   $arguments = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$RunnerPath`""
+
+  if (-not (Get-Command New-ScheduledTaskAction -ErrorAction SilentlyContinue)) {
+    $schtasks = Get-Command schtasks.exe -ErrorAction SilentlyContinue
+    if (-not $schtasks) {
+      throw "Neither the ScheduledTasks PowerShell module nor schtasks.exe is available."
+    }
+
+    $taskRun = "`"$powershellPath`" $arguments"
+    & $schtasks.Source /Create /TN $taskName /TR $taskRun /SC ONLOGON /RU $userId /RL LIMITED /F | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      throw "schtasks.exe could not register the logon task (exit code $LASTEXITCODE)."
+    }
+    return $taskName
+  }
 
   $action = New-ScheduledTaskAction `
     -Execute $powershellPath `
