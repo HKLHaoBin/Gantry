@@ -22,7 +22,11 @@ function Get-DirectoryPath {
   if (-not ($item -is [System.IO.DirectoryInfo])) {
     throw "Worker directory is not a directory: $Path"
   }
-  return $item.FullName.TrimEnd("\")
+  $fullPath = $item.FullName
+  if ($fullPath.Length -gt 3) {
+    $fullPath = $fullPath.TrimEnd("\")
+  }
+  return $fullPath
 }
 
 function Write-ManagedWorkspaceBlock {
@@ -53,11 +57,15 @@ function Write-ManagedWorkspaceBlock {
 
   if (Test-Path -LiteralPath $Path) {
     $existing = Get-Content -LiteralPath $Path -Raw
-    $escapedBegin = [Regex]::Escape($begin)
-    $escapedEnd = [Regex]::Escape($end)
-    $pattern = "(?s)$escapedBegin.*?$escapedEnd"
-    if ($existing -match $escapedBegin -and $existing -match $escapedEnd) {
-      $updated = [Regex]::Replace($existing, $pattern, $block, 1)
+    $beginIndex = $existing.IndexOf($begin, [StringComparison]::Ordinal)
+    $endIndex = if ($beginIndex -ge 0) {
+      $existing.IndexOf($end, $beginIndex + $begin.Length, [StringComparison]::Ordinal)
+    } else {
+      -1
+    }
+    if ($beginIndex -ge 0 -and $endIndex -ge 0) {
+      $afterEnd = $endIndex + $end.Length
+      $updated = $existing.Substring(0, $beginIndex) + $block + $existing.Substring($afterEnd)
     } elseif ($existing.Trim().Length -eq 0) {
       $updated = $block + [Environment]::NewLine
     } else {
