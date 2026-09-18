@@ -171,34 +171,6 @@ Health check: [http://localhost:8787/health](http://localhost:8787/health)
 
 ---
 
-## Cursor Worker Onboarding Skill
-
-This repository also packages `gantry-worker-onboarding`, a Windows-focused
-Cursor Agent Plugin. It guides a user through:
-
-- installing and signing in to the official Cursor Agent CLI;
-- registering concrete project checkouts as My Machines worker directories;
-- writing the selected paths to
-  `~/.cursor/memory-graphs/WORKSPACE-ROOTS.md`;
-- optionally registering a per-user, hidden-at-logon Scheduled Task;
-- starting one worker immediately and collecting startup diagnostics.
-
-The skill requires explicit confirmation before it creates the startup task or
-starts a worker. It does not expose `.cursor` or `localhost` through a public
-URL. The supported web entry point is
-[cursor.com/agents](https://cursor.com/agents), where the user selects the
-registered machine. See
-[`skills/gantry-worker-onboarding/SKILL.md`](skills/gantry-worker-onboarding/SKILL.md)
-for the workflow and
-[`references/WEB-USE.md`](skills/gantry-worker-onboarding/references/WEB-USE.md)
-for routing and security limits.
-
-To install from this GitHub repository, use Cursor's Customize / Plugins flow
-and import the repository. The root `plugin.json` makes the repository an
-Agent Plugin, and the skill is under `skills/`.
-
----
-
 ## Commands
 
 ### Core
